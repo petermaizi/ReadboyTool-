@@ -81,10 +81,11 @@ public class MainActivity extends AppCompatActivity {
             providerOps.setVisibility(View.GONE);
             findViewById(R.id.inputLayout).setVisibility(View.GONE);
             btnClearAll.setVisibility(View.GONE);
-            findViewById(R.id.btnClearAll).setVisibility(View.GONE);
             btnGrantStorage.setVisibility(View.VISIBLE);
+            btnGrantStorage.setText("① 读取系统配置");
             btnClearSystem.setVisibility(View.VISIBLE);
-            tvResult.setText("切换到了 系统配置\n\n点击「① 授予文件访问权限」按钮\n→ 然后点「⚠ 清空系统配置限制」");
+            btnClearSystem.setText("② 清空/修改系统配置限制");
+            tvResult.setText("切换到 系统配置\n\n点击「① 读取系统配置」→ 先试试能不能直接访问\n如果提示需要权限，按指引操作\n→ 再点「② 清空/修改系统配置限制」");
         } else {
             providerOps.setVisibility(View.VISIBLE);
             findViewById(R.id.inputLayout).setVisibility(View.VISIBLE);
@@ -96,38 +97,46 @@ public class MainActivity extends AppCompatActivity {
 
     // ──── 请求文件访问权限 ────
     private void requestStoragePermission() {
+        // 先直接尝试读取，有些设备不需要权限也能读内部存储
+        readSystemConfig();
+    }
+
+    private void attemptReadConfigDirectly() {
+        File confdFile = new File(Environment.getExternalStorageDirectory(), "backups/system/.confd");
+        if (confdFile.exists() && confdFile.canRead()) {
+            readSystemConfig();
+            return;
+        }
+
+        // 需要权限 — Android 11+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ 用 MANAGE_EXTERNAL_STORAGE
             if (Environment.isExternalStorageManager()) {
-                log("已有文件访问权限");
                 readSystemConfig();
             } else {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent, STORAGE_PERMISSION_REQUEST);
+                new AlertDialog.Builder(this)
+                    .setTitle("需要文件访问权限")
+                    .setMessage("请点击「允许管理所有文件」→ 找到「RB Tool」→ 打开开关\n\n完成后返回此 APP，再点「② 已授权，重新读取」")
+                    .setPositiveButton("去设置", (d, w) -> {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                            intent.setData(Uri.parse("package:" + getPackageName()));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            toast("无法打开设置页面，请手动授予权限");
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
             }
         } else {
-            // Android 10 及以下用 READ/WRITE_EXTERNAL_STORAGE
+            // Android 10 及以下
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
+                    == PackageManager.PERMISSION_GRANTED) {
+                readSystemConfig();
+            } else {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         STORAGE_PERMISSION_REQUEST);
-            } else {
-                readSystemConfig();
-            }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == STORAGE_PERMISSION_REQUEST) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
-                log("权限已授予");
-                readSystemConfig();
-            } else {
-                toast("需要文件访问权限才能读取系统配置");
             }
         }
     }
