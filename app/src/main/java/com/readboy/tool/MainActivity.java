@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
