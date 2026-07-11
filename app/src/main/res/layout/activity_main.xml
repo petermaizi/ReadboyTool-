@@ -41,9 +41,15 @@
             android:layout_height="wrap_content"
             android:text="user_info" />
 
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="系统配置" />
+
     </com.google.android.material.tabs.TabLayout>
 
     <LinearLayout
+        android:id="@+id/providerOps"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -99,6 +105,23 @@
         android:layout_marginTop="4dp"
         android:backgroundTint="#D32F2F"
         android:text="⚠ 清空 forbidden_app（全部解除限制）" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClearSystem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:backgroundTint="#D32F2F"
+        android:text="⚠ 清空系统配置限制"
+        android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGrantStorage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="① 授予文件访问权限"
+        android:visibility="gone" />
 
     <TextView
         android:layout_width="match_parent"
